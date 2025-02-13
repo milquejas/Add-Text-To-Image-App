@@ -1,4 +1,4 @@
-# Canva API Text Editor
+# Add-Text-To-Image-App
 
 A simple and user-friendly web application for adding text to images. The application allows you to add text to images and freely position text boxes using drag and drop functionality.
 
@@ -40,15 +40,15 @@ A simple and user-friendly web application for adding text to images. The applic
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/[username]/canva_api.git
+git clone https://github.com/[username]/Add-Text-To-Image-App.git
 ```
 
 2. Open the project directory:
 ```bash
-cd canva_api
+cd Add-Text-To-Image-App
 ```
 
-3. Open `canva.html` in your browser or start a local server using Python:
+3. Open `index.html` in your browser or start a local server using Python:
 ```bash
 python -m http.server
 ```
