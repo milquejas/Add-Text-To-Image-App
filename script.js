@@ -6,7 +6,7 @@ let activeTextBox = null;
 let isDragging = false;
 let dragOffset = { x: 0, y: 0 };
 
-// Lisää kuuntelijat kontrolleille
+// Add listeners for controls
 document.getElementById("fontSelect").addEventListener("change", updateActiveTextStyle);
 document.getElementById("fontSize").addEventListener("input", updateActiveTextStyle);
 document.getElementById("colorPicker").addEventListener("input", updateActiveTextStyle);
@@ -27,12 +27,12 @@ img.onload = function () {
     canvas.height = img.height;
     redrawCanvas();
 
-    // Päivitä olemassa olevien tekstilaatikoiden maksimikoot
+    // Update maximum sizes for existing text boxes
     textBoxes.forEach(updateTextBoxMaxSize);
 };
 
 function addTextBox() {
-    const text = document.getElementById("textInput").value || "Kaksoisklikkaa muokataksesi";
+    const text = document.getElementById("textInput").value || "Double click to edit";
     const font = document.getElementById("fontSelect").value;
     const fontSize = document.getElementById("fontSize").value;
     const color = document.getElementById("colorPicker").value;
@@ -46,7 +46,7 @@ function addTextBox() {
     textBox.style.color = color;
     textBox.innerHTML = text;
 
-    // Lisää poistopainike
+    // Add delete button
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "delete-btn";
     deleteBtn.innerHTML = "×";
@@ -56,7 +56,7 @@ function addTextBox() {
     };
     textBox.appendChild(deleteBtn);
 
-    // Aseta tekstilaatikon sijainti
+    // Set text box position
     let y;
     if (position === "top") {
         y = 10;
@@ -69,11 +69,12 @@ function addTextBox() {
     textBox.style.left = (canvas.width / 2 - 50) + "px";
     textBox.style.top = y + "px";
 
-    // Päivitä tekstilaatikon maksimikoko
+    // Update text box maximum size
     updateTextBoxMaxSize(textBox);
 
-    // Lisää tapahtumankäsittelijät
+    // Add event listeners
     textBox.addEventListener("mousedown", startDragging);
+    textBox.addEventListener("touchstart", startDragging);
     textBox.addEventListener("click", selectTextBox);
     textBox.addEventListener("dblclick", activateTextBox);
     textBox.addEventListener("blur", deactivateTextBox);
@@ -83,7 +84,7 @@ function addTextBox() {
     container.appendChild(textBox);
     textBoxes.push(textBox);
 
-    // Aseta uusi tekstilaatikko aktiiviseksi
+    // Set new text box as active
     selectTextBox({ target: textBox });
 }
 
@@ -97,7 +98,7 @@ function handleResize(e) {
     const rect = textBox.getBoundingClientRect();
     const containerRect = canvas.getBoundingClientRect();
 
-    // Varmista, että laatikko pysyy kuvan rajojen sisällä
+    // Ensure box stays within image boundaries
     const maxWidth = canvas.width - parseInt(textBox.style.left);
     const maxHeight = canvas.height - parseInt(textBox.style.top);
 
@@ -106,23 +107,23 @@ function handleResize(e) {
 }
 
 function adjustTextBoxSize(textBox) {
-    // Säädä laatikon kokoa tekstin mukaan
+    // Adjust box size according to text
     const text = textBox.innerText;
     const style = window.getComputedStyle(textBox);
     const fontSize = parseInt(style.fontSize);
     const maxWidth = Math.min(500, canvas.width * 0.8);
 
-    // Aseta minimi leveys ja korkeus
+    // Set minimum width and height
     textBox.style.width = "auto";
     textBox.style.height = "auto";
 
-    // Rajoita koko canvasin sisälle
+    // Limit size within canvas
     const rect = textBox.getBoundingClientRect();
     if (rect.width > maxWidth) {
         textBox.style.width = maxWidth + "px";
     }
 
-    // Varmista, että laatikko pysyy kuvan rajojen sisällä
+    // Ensure box stays within image boundaries
     const left = parseInt(textBox.style.left);
     const top = parseInt(textBox.style.top);
     if (left + rect.width > canvas.width) {
@@ -134,66 +135,83 @@ function adjustTextBoxSize(textBox) {
 }
 
 function updateTextBoxMaxSize(textBox) {
-    // Päivitä tekstilaatikon maksimikoot canvasin koon mukaan
+    // Update text box maximum sizes according to canvas size
     textBox.style.maxWidth = Math.min(500, canvas.width * 0.8) + "px";
     textBox.style.maxHeight = Math.min(200, canvas.height * 0.6) + "px";
 }
 
 function startDragging(e) {
-    // Tarkista, ettei olla muokkaamassa tekstiä
+    // Check if we're not editing text
     if (document.activeElement === e.target) {
         return;
     }
 
     const textBox = e.target.closest(".text-box");
     if (textBox) {
-        e.preventDefault(); // Estä tekstin valinta raahauksen aikana
+        e.preventDefault(); // Prevent text selection during drag
         isDragging = true;
         activeTextBox = textBox;
+
+        // Handle both mouse and touch events
+        const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
         const rect = activeTextBox.getBoundingClientRect();
-        dragOffset.x = e.clientX - rect.left;
-        dragOffset.y = e.clientY - rect.top;
+        dragOffset.x = clientX - rect.left;
+        dragOffset.y = clientY - rect.top;
         activeTextBox.style.cursor = "grabbing";
     }
 }
 
-document.addEventListener("mousemove", (e) => {
+// Update mousemove handler to support touch
+document.addEventListener("mousemove", handleDrag);
+document.addEventListener("touchmove", handleDrag);
+
+function handleDrag(e) {
     if (isDragging && activeTextBox) {
-        e.preventDefault(); // Estä tekstin valinta raahauksen aikana
+        e.preventDefault(); // Prevent text selection and page scroll
         const container = document.getElementById("canvas-container");
         const containerRect = container.getBoundingClientRect();
 
-        let newX = e.clientX - containerRect.left - dragOffset.x;
-        let newY = e.clientY - containerRect.top - dragOffset.y;
+        // Handle both mouse and touch events
+        const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
 
-        // Rajoita laatikon liikkuminen canvas-alueen sisälle
+        let newX = clientX - containerRect.left - dragOffset.x;
+        let newY = clientY - containerRect.top - dragOffset.y;
+
+        // Restrict box movement within canvas area
         newX = Math.max(0, Math.min(newX, canvas.width - activeTextBox.offsetWidth));
         newY = Math.max(0, Math.min(newY, canvas.height - activeTextBox.offsetHeight));
 
         activeTextBox.style.left = newX + "px";
         activeTextBox.style.top = newY + "px";
     }
-});
+}
 
-document.addEventListener("mouseup", () => {
+// Update mouseup handler to support touch
+document.addEventListener("mouseup", endDrag);
+document.addEventListener("touchend", endDrag);
+
+function endDrag() {
     if (isDragging && activeTextBox) {
         activeTextBox.style.cursor = "move";
         isDragging = false;
     }
-});
+}
 
 function selectTextBox(e) {
-    // Poista aktiivinen luokka kaikista tekstilaatikoista
+    // Remove active class from all text boxes
     textBoxes.forEach(box => box.classList.remove("active"));
 
-    // Aseta uusi aktiivinen tekstilaatikko
+    // Set new active text box
     const textBox = e.target.closest(".text-box");
     if (textBox) {
         activeTextBox = textBox;
         textBox.classList.add("active");
         document.getElementById("deleteButton").disabled = false;
 
-        // Päivitä kontrollit vastaamaan aktiivisen tekstilaatikon tyylejä
+        // Update controls to match active text box styles
         updateControlsFromTextBox(textBox);
     }
 }
@@ -218,20 +236,20 @@ function updateControlsFromTextBox(textBox) {
     const style = window.getComputedStyle(textBox);
     const font = style.font;
 
-    // Päivitä fonttikoko
+    // Update font size
     const fontSize = parseInt(style.fontSize);
     document.getElementById("fontSize").value = fontSize;
 
-    // Päivitä fontti
+    // Update font
     const fontFamily = style.fontFamily.replace(/["']/g, "");
     document.getElementById("fontSelect").value = fontFamily;
 
-    // Päivitä väri
+    // Update color
     document.getElementById("colorPicker").value = rgbToHex(style.color);
 }
 
 function rgbToHex(rgb) {
-    // Muunna rgb(r, g, b) muoto hex-muotoon
+    // Convert rgb(r, g, b) format to hex
     const rgbValues = rgb.match(/\d+/g);
     if (!rgbValues) return "#ffffff";
 
@@ -259,7 +277,7 @@ function activateTextBox(e) {
 }
 
 function deactivateTextBox(e) {
-    // Älä poista active-luokkaa täällä, koska haluamme säilyttää valinnan
+    // Don't remove active class here as we want to maintain selection
 }
 
 function redrawCanvas() {
@@ -267,23 +285,23 @@ function redrawCanvas() {
 }
 
 function downloadImage() {
-    // Luo väliaikainen canvas tekstien renderöintiä varten
+    // Create temporary canvas for text rendering
     const tempCanvas = document.createElement("canvas");
     tempCanvas.width = canvas.width;
     tempCanvas.height = canvas.height;
     const tempCtx = tempCanvas.getContext("2d");
 
-    // Piirrä alkuperäinen kuva
+    // Draw original image
     tempCtx.drawImage(img, 0, 0);
 
-    // Piirrä tekstit
+    // Draw texts
     textBoxes.forEach(textBox => {
         const style = window.getComputedStyle(textBox);
         tempCtx.font = style.font;
         tempCtx.fillStyle = style.color;
         tempCtx.textBaseline = "top";
 
-        // Lisää varjostus
+        // Add shadow
         tempCtx.shadowColor = "rgba(0, 0, 0, 0.5)";
         tempCtx.shadowBlur = 5;
         tempCtx.shadowOffsetX = 2;
@@ -297,9 +315,9 @@ function downloadImage() {
         tempCtx.fillText(textBox.innerText, x, y);
     });
 
-    // Lataa kuva
+    // Download image
     const link = document.createElement("a");
-    link.download = "muokattu-kuva.png";
+    link.download = "modified-image.png";
     link.href = tempCanvas.toDataURL("image/png");
     link.click();
 } 

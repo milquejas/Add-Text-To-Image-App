@@ -1,30 +1,30 @@
 <!DOCTYPE html>
-<html lang="fi">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kuvan tekstityökalu</title>
+    <title>Image Text Editor</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
     <div class="container">
-        <h2>Lisää tekstiä kuvaan ja lataa se</h2>
+        <h2>Add Text to Image and Download</h2>
 
         <div class="controls">
             <div class="control-group">
-                <label>Kuvan valinta</label>
+                <label>Select Image</label>
                 <input type="file" id="imageUpload" accept="image/*">
             </div>
 
             <div class="control-group">
-                <label>Teksti</label>
-                <input type="text" id="textInput" placeholder="Kirjoita teksti">
+                <label>Text</label>
+                <input type="text" id="textInput" placeholder="Enter text">
             </div>
 
             <div class="control-group">
-                <label>Fontti</label>
+                <label>Font</label>
                 <select id="fontSelect">
                     <option value="Arial">Arial</option>
                     <option value="Verdana">Verdana</option>
@@ -35,29 +35,29 @@
             </div>
 
             <div class="control-group">
-                <label>Koko (px)</label>
+                <label>Size (px)</label>
                 <input type="number" id="fontSize" value="30" min="10" max="100">
             </div>
 
             <div class="control-group">
-                <label>Väri</label>
+                <label>Color</label>
                 <input type="color" id="colorPicker" value="#ffffff">
             </div>
 
             <div class="control-group">
-                <label>Sijainti</label>
+                <label>Position</label>
                 <select id="positionSelect">
-                    <option value="top">Ylhäällä</option>
-                    <option value="center">Keskellä</option>
-                    <option value="bottom" selected>Alhaalla</option>
+                    <option value="top">Top</option>
+                    <option value="center">Center</option>
+                    <option value="bottom" selected>Bottom</option>
                 </select>
             </div>
         </div>
 
         <div class="button-group">
-            <button onclick="addTextBox()">Lisää tekstilaatikko</button>
-            <button onclick="deleteActiveTextBox()" id="deleteButton" disabled>Poista valittu teksti</button>
-            <button onclick="downloadImage()">Lataa kuva</button>
+            <button onclick="addTextBox()">Add Text Box</button>
+            <button onclick="deleteActiveTextBox()" id="deleteButton" disabled>Delete Selected Text</button>
+            <button onclick="downloadImage()">Download Image</button>
         </div>
 
         <div id="canvas-container">
