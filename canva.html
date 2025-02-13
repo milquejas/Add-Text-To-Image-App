@@ -9,40 +9,61 @@
 </head>
 
 <body>
-    <h2>Lisää tekstiä kuvaan ja lataa se</h2>
+    <div class="container">
+        <h2>Lisää tekstiä kuvaan ja lataa se</h2>
 
-    <div class="controls">
-        <input type="file" id="imageUpload" accept="image/*"><br><br>
-        <input type="text" id="textInput" placeholder="Kirjoita teksti"><br><br>
+        <div class="controls">
+            <div class="control-group">
+                <label>Kuvan valinta</label>
+                <input type="file" id="imageUpload" accept="image/*">
+            </div>
 
-        <label>Fontti:</label>
-        <select id="fontSelect">
-            <option value="Arial">Arial</option>
-            <option value="Verdana">Verdana</option>
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Courier New">Courier New</option>
-            <option value="Georgia">Georgia</option>
-        </select>
+            <div class="control-group">
+                <label>Teksti</label>
+                <input type="text" id="textInput" placeholder="Kirjoita teksti">
+            </div>
 
-        <label>Koko:</label>
-        <input type="number" id="fontSize" value="30" min="10" max="100"> px
+            <div class="control-group">
+                <label>Fontti</label>
+                <select id="fontSelect">
+                    <option value="Arial">Arial</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Georgia">Georgia</option>
+                </select>
+            </div>
 
-        <label>Väri:</label>
-        <input type="color" id="colorPicker" value="#ffffff">
+            <div class="control-group">
+                <label>Koko (px)</label>
+                <input type="number" id="fontSize" value="30" min="10" max="100">
+            </div>
 
-        <label>Sijainti:</label>
-        <select id="positionSelect">
-            <option value="top">Ylhäällä</option>
-            <option value="center">Keskellä</option>
-            <option value="bottom" selected>Alhaalla</option>
-        </select>
+            <div class="control-group">
+                <label>Väri</label>
+                <input type="color" id="colorPicker" value="#ffffff">
+            </div>
+
+            <div class="control-group">
+                <label>Sijainti</label>
+                <select id="positionSelect">
+                    <option value="top">Ylhäällä</option>
+                    <option value="center">Keskellä</option>
+                    <option value="bottom" selected>Alhaalla</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button onclick="addTextBox()">Lisää tekstilaatikko</button>
+            <button onclick="deleteActiveTextBox()" id="deleteButton" disabled>Poista valittu teksti</button>
+            <button onclick="downloadImage()">Lataa kuva</button>
+        </div>
+
+        <div id="canvas-container">
+            <canvas id="canvas"></canvas>
+        </div>
     </div>
-
-    <button onclick="addText()">Lisää teksti</button>
-    <button onclick="downloadImage()">Lataa kuva</button>
-
-    <br><br>
-    <canvas id="canvas"></canvas>
 
     <script src="script.js"></script>
 </body>

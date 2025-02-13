@@ -1,6 +1,15 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 let img = new Image();
+let textBoxes = [];
+let activeTextBox = null;
+let isDragging = false;
+let dragOffset = { x: 0, y: 0 };
+
+// Lisää kuuntelijat kontrolleille
+document.getElementById("fontSelect").addEventListener("change", updateActiveTextStyle);
+document.getElementById("fontSize").addEventListener("input", updateActiveTextStyle);
+document.getElementById("colorPicker").addEventListener("input", updateActiveTextStyle);
 
 document.getElementById("imageUpload").addEventListener("change", function (event) {
     const file = event.target.files[0];
@@ -16,78 +25,281 @@ document.getElementById("imageUpload").addEventListener("change", function (even
 img.onload = function () {
     canvas.width = img.width;
     canvas.height = img.height;
-    ctx.drawImage(img, 0, 0);
+    redrawCanvas();
+
+    // Päivitä olemassa olevien tekstilaatikoiden maksimikoot
+    textBoxes.forEach(updateTextBoxMaxSize);
 };
 
-function addText() {
-    const text = document.getElementById("textInput").value;
+function addTextBox() {
+    const text = document.getElementById("textInput").value || "Kaksoisklikkaa muokataksesi";
     const font = document.getElementById("fontSelect").value;
-    let fontSize = parseInt(document.getElementById("fontSize").value);
+    const fontSize = document.getElementById("fontSize").value;
     const color = document.getElementById("colorPicker").value;
     const position = document.getElementById("positionSelect").value;
 
-    if (!text) return;
+    const container = document.getElementById("canvas-container");
+    const textBox = document.createElement("div");
+    textBox.className = "text-box";
+    textBox.contentEditable = true;
+    textBox.style.font = `${fontSize}px ${font}`;
+    textBox.style.color = color;
+    textBox.innerHTML = text;
 
-    ctx.drawImage(img, 0, 0); // Piirretään kuva uudelleen
-    ctx.fillStyle = color;
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 3;
-    ctx.textAlign = "center";
+    // Lisää poistopainike
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "delete-btn";
+    deleteBtn.innerHTML = "×";
+    deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        deleteTextBox(textBox);
+    };
+    textBox.appendChild(deleteBtn);
 
-    let maxWidth = canvas.width * 0.8; // Teksti mahtuu 80% kuvan leveydestä
-    let lines = getWrappedText(ctx, text, maxWidth, font, fontSize);
-
-    let textHeight = lines.length * fontSize * 1.2; // Kokonaiskorkeus kaikille riveille
-    let x = canvas.width / 2;
+    // Aseta tekstilaatikon sijainti
     let y;
-
-    // Tekstin sijoitus kuvan eri kohtiin
     if (position === "top") {
-        y = fontSize + 10;
+        y = 10;
     } else if (position === "center") {
-        y = (canvas.height - textHeight) / 2 + fontSize;
+        y = canvas.height / 2 - 20;
     } else {
-        y = canvas.height - textHeight;
+        y = canvas.height - 60;
     }
 
-    // Piirretään jokainen rivi erikseen
-    ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-    ctx.shadowBlur = 5;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
+    textBox.style.left = (canvas.width / 2 - 50) + "px";
+    textBox.style.top = y + "px";
 
-    lines.forEach((line, i) => {
-        let lineY = y + i * fontSize * 1.2;
-        ctx.font = `${fontSize}px ${font}`;
-        ctx.strokeText(line, x, lineY);
-        ctx.fillText(line, x, lineY);
-    });
+    // Päivitä tekstilaatikon maksimikoko
+    updateTextBoxMaxSize(textBox);
+
+    // Lisää tapahtumankäsittelijät
+    textBox.addEventListener("mousedown", startDragging);
+    textBox.addEventListener("click", selectTextBox);
+    textBox.addEventListener("dblclick", activateTextBox);
+    textBox.addEventListener("blur", deactivateTextBox);
+    textBox.addEventListener("input", handleTextInput);
+    textBox.addEventListener("resize", handleResize);
+
+    container.appendChild(textBox);
+    textBoxes.push(textBox);
+
+    // Aseta uusi tekstilaatikko aktiiviseksi
+    selectTextBox({ target: textBox });
 }
 
-function getWrappedText(ctx, text, maxWidth, font, fontSize) {
-    ctx.font = `${fontSize}px ${font}`;
-    let words = text.split(" ");
-    let lines = [];
-    let currentLine = words[0];
+function handleTextInput(e) {
+    const textBox = e.target;
+    adjustTextBoxSize(textBox);
+}
 
-    for (let i = 1; i < words.length; i++) {
-        let testLine = currentLine + " " + words[i];
-        let testWidth = ctx.measureText(testLine).width;
+function handleResize(e) {
+    const textBox = e.target;
+    const rect = textBox.getBoundingClientRect();
+    const containerRect = canvas.getBoundingClientRect();
 
-        if (testWidth <= maxWidth) {
-            currentLine = testLine;
-        } else {
-            lines.push(currentLine);
-            currentLine = words[i];
-        }
+    // Varmista, että laatikko pysyy kuvan rajojen sisällä
+    const maxWidth = canvas.width - parseInt(textBox.style.left);
+    const maxHeight = canvas.height - parseInt(textBox.style.top);
+
+    textBox.style.width = Math.min(rect.width, maxWidth) + "px";
+    textBox.style.height = Math.min(rect.height, maxHeight) + "px";
+}
+
+function adjustTextBoxSize(textBox) {
+    // Säädä laatikon kokoa tekstin mukaan
+    const text = textBox.innerText;
+    const style = window.getComputedStyle(textBox);
+    const fontSize = parseInt(style.fontSize);
+    const maxWidth = Math.min(500, canvas.width * 0.8);
+
+    // Aseta minimi leveys ja korkeus
+    textBox.style.width = "auto";
+    textBox.style.height = "auto";
+
+    // Rajoita koko canvasin sisälle
+    const rect = textBox.getBoundingClientRect();
+    if (rect.width > maxWidth) {
+        textBox.style.width = maxWidth + "px";
     }
-    lines.push(currentLine);
-    return lines;
+
+    // Varmista, että laatikko pysyy kuvan rajojen sisällä
+    const left = parseInt(textBox.style.left);
+    const top = parseInt(textBox.style.top);
+    if (left + rect.width > canvas.width) {
+        textBox.style.left = (canvas.width - rect.width) + "px";
+    }
+    if (top + rect.height > canvas.height) {
+        textBox.style.top = (canvas.height - rect.height) + "px";
+    }
+}
+
+function updateTextBoxMaxSize(textBox) {
+    // Päivitä tekstilaatikon maksimikoot canvasin koon mukaan
+    textBox.style.maxWidth = Math.min(500, canvas.width * 0.8) + "px";
+    textBox.style.maxHeight = Math.min(200, canvas.height * 0.6) + "px";
+}
+
+function startDragging(e) {
+    // Tarkista, ettei olla muokkaamassa tekstiä
+    if (document.activeElement === e.target) {
+        return;
+    }
+
+    const textBox = e.target.closest(".text-box");
+    if (textBox) {
+        e.preventDefault(); // Estä tekstin valinta raahauksen aikana
+        isDragging = true;
+        activeTextBox = textBox;
+        const rect = activeTextBox.getBoundingClientRect();
+        dragOffset.x = e.clientX - rect.left;
+        dragOffset.y = e.clientY - rect.top;
+        activeTextBox.style.cursor = "grabbing";
+    }
+}
+
+document.addEventListener("mousemove", (e) => {
+    if (isDragging && activeTextBox) {
+        e.preventDefault(); // Estä tekstin valinta raahauksen aikana
+        const container = document.getElementById("canvas-container");
+        const containerRect = container.getBoundingClientRect();
+
+        let newX = e.clientX - containerRect.left - dragOffset.x;
+        let newY = e.clientY - containerRect.top - dragOffset.y;
+
+        // Rajoita laatikon liikkuminen canvas-alueen sisälle
+        newX = Math.max(0, Math.min(newX, canvas.width - activeTextBox.offsetWidth));
+        newY = Math.max(0, Math.min(newY, canvas.height - activeTextBox.offsetHeight));
+
+        activeTextBox.style.left = newX + "px";
+        activeTextBox.style.top = newY + "px";
+    }
+});
+
+document.addEventListener("mouseup", () => {
+    if (isDragging && activeTextBox) {
+        activeTextBox.style.cursor = "move";
+        isDragging = false;
+    }
+});
+
+function selectTextBox(e) {
+    // Poista aktiivinen luokka kaikista tekstilaatikoista
+    textBoxes.forEach(box => box.classList.remove("active"));
+
+    // Aseta uusi aktiivinen tekstilaatikko
+    const textBox = e.target.closest(".text-box");
+    if (textBox) {
+        activeTextBox = textBox;
+        textBox.classList.add("active");
+        document.getElementById("deleteButton").disabled = false;
+
+        // Päivitä kontrollit vastaamaan aktiivisen tekstilaatikon tyylejä
+        updateControlsFromTextBox(textBox);
+    }
+}
+
+function deleteActiveTextBox() {
+    if (activeTextBox) {
+        deleteTextBox(activeTextBox);
+    }
+}
+
+function deleteTextBox(textBox) {
+    const container = document.getElementById("canvas-container");
+    container.removeChild(textBox);
+    textBoxes = textBoxes.filter(box => box !== textBox);
+    if (activeTextBox === textBox) {
+        activeTextBox = null;
+        document.getElementById("deleteButton").disabled = true;
+    }
+}
+
+function updateControlsFromTextBox(textBox) {
+    const style = window.getComputedStyle(textBox);
+    const font = style.font;
+
+    // Päivitä fonttikoko
+    const fontSize = parseInt(style.fontSize);
+    document.getElementById("fontSize").value = fontSize;
+
+    // Päivitä fontti
+    const fontFamily = style.fontFamily.replace(/["']/g, "");
+    document.getElementById("fontSelect").value = fontFamily;
+
+    // Päivitä väri
+    document.getElementById("colorPicker").value = rgbToHex(style.color);
+}
+
+function rgbToHex(rgb) {
+    // Muunna rgb(r, g, b) muoto hex-muotoon
+    const rgbValues = rgb.match(/\d+/g);
+    if (!rgbValues) return "#ffffff";
+
+    const r = parseInt(rgbValues[0]);
+    const g = parseInt(rgbValues[1]);
+    const b = parseInt(rgbValues[2]);
+
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+function updateActiveTextStyle() {
+    if (!activeTextBox) return;
+
+    const font = document.getElementById("fontSelect").value;
+    const fontSize = document.getElementById("fontSize").value;
+    const color = document.getElementById("colorPicker").value;
+
+    activeTextBox.style.font = `${fontSize}px ${font}`;
+    activeTextBox.style.color = color;
+}
+
+function activateTextBox(e) {
+    const textBox = e.target;
+    textBox.focus();
+}
+
+function deactivateTextBox(e) {
+    // Älä poista active-luokkaa täällä, koska haluamme säilyttää valinnan
+}
+
+function redrawCanvas() {
+    ctx.drawImage(img, 0, 0);
 }
 
 function downloadImage() {
+    // Luo väliaikainen canvas tekstien renderöintiä varten
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext("2d");
+
+    // Piirrä alkuperäinen kuva
+    tempCtx.drawImage(img, 0, 0);
+
+    // Piirrä tekstit
+    textBoxes.forEach(textBox => {
+        const style = window.getComputedStyle(textBox);
+        tempCtx.font = style.font;
+        tempCtx.fillStyle = style.color;
+        tempCtx.textBaseline = "top";
+
+        // Lisää varjostus
+        tempCtx.shadowColor = "rgba(0, 0, 0, 0.5)";
+        tempCtx.shadowBlur = 5;
+        tempCtx.shadowOffsetX = 2;
+        tempCtx.shadowOffsetY = 2;
+
+        const rect = textBox.getBoundingClientRect();
+        const containerRect = canvas.getBoundingClientRect();
+        const x = parseInt(textBox.style.left);
+        const y = parseInt(textBox.style.top);
+
+        tempCtx.fillText(textBox.innerText, x, y);
+    });
+
+    // Lataa kuva
     const link = document.createElement("a");
     link.download = "muokattu-kuva.png";
-    link.href = canvas.toDataURL("image/png");
+    link.href = tempCanvas.toDataURL("image/png");
     link.click();
 } 

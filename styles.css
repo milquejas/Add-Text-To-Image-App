@@ -1,14 +1,188 @@
+:root {
+  /* Spacing (rem = 16px) */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.5rem; /* 24px */
+  --space-6: 2rem; /* 32px */
+
+  /* Colors */
+  --color-bg: #1a1a1a;
+  --color-text: #ffffff;
+  --color-primary: #ffd700;
+  --color-secondary: #4169e1;
+  --color-surface: #2d2d2d;
+  --color-border: #404040;
+
+  /* Typography */
+  --font-family: "Arial", sans-serif;
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px */
+  --font-size-lg: 1.25rem; /* 20px */
+  --font-size-xl: 1.5rem; /* 24px */
+
+  /* Line heights */
+  --line-height-sm: 1.2;
+  --line-height-base: 1.5;
+  --line-height-lg: 1.8;
+}
+
 body {
-  font-family: Arial, sans-serif;
-  text-align: center;
+  font-family: var(--font-family);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: var(--line-height-base);
+  margin: 0;
+  padding: var(--space-4);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-4);
+}
+
+h2 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-5);
+  color: var(--color-primary);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  background-color: var(--color-surface);
+  padding: var(--space-4);
+  border-radius: var(--space-2);
+  margin-bottom: var(--space-4);
+  align-items: center;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+label {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: var(--space-2);
+  border-radius: var(--space-1);
+  font-size: var(--font-size-base);
+  min-width: 120px;
+}
+
+input[type="file"] {
+  background-color: var(--color-surface);
+  padding: var(--space-2);
+  border-radius: var(--space-1);
+  width: 100%;
+  margin-bottom: var(--space-4);
+}
+
+.button-group {
+  display: flex;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+button {
+  background-color: var(--color-secondary);
+  color: var(--color-text);
+  border: none;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--space-1);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button[onclick="addTextBox()"] {
+  background-color: var(--color-primary);
+  color: var(--color-bg);
+}
+
+#canvas-container {
+  position: relative;
+  display: inline-block;
+  margin: var(--space-4) auto;
+  background-color: var(--color-surface);
+  padding: var(--space-2);
+  border-radius: var(--space-2);
 }
 
 canvas {
   max-width: 100%;
-  border: 1px solid #ccc;
-  margin-top: 10px;
+  border: 1px solid var(--color-border);
 }
 
-.controls {
-  margin-bottom: 10px;
+.text-box {
+  position: absolute;
+  min-width: 50px;
+  min-height: 20px;
+  max-width: min(500px, 80%);
+  max-height: min(200px, 60%);
+  padding: var(--space-2);
+  border: 1px solid transparent;
+  cursor: move;
+  user-select: none;
+  background: transparent;
+  color: var(--color-text);
+  text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.5);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
+  resize: both;
+}
+
+.text-box:hover {
+  border: 1px dashed var(--color-secondary);
+}
+
+.text-box.active {
+  border: 1px solid var(--color-primary);
+}
+
+.text-box .delete-btn {
+  position: absolute;
+  right: calc(-1 * var(--space-4));
+  top: calc(-1 * var(--space-4));
+  background: #ff4444;
+  color: var(--color-text);
+  border: none;
+  border-radius: 50%;
+  width: var(--space-4);
+  height: var(--space-4);
+  cursor: pointer;
+  display: none;
+  font-size: var(--font-size-sm);
+  line-height: 1;
+  padding: 0;
+}
+
+.text-box:hover .delete-btn {
+  display: block;
 }
