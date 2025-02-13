@@ -51,19 +51,21 @@ h2 {
 
 .controls {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--space-4);
   background-color: var(--color-surface);
   padding: var(--space-4);
   border-radius: var(--space-2);
   margin-bottom: var(--space-4);
-  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .control-group {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  width: 100%;
 }
 
 label {
@@ -74,13 +76,15 @@ label {
 input[type="text"],
 input[type="number"],
 select {
+  width: 100%;
+  min-width: unset;
+  box-sizing: border-box;
   background-color: var(--color-bg);
   border: 1px solid var(--color-border);
   color: var(--color-text);
   padding: var(--space-2);
   border-radius: var(--space-1);
   font-size: var(--font-size-base);
-  min-width: 120px;
 }
 
 input[type="file"] {
@@ -93,11 +97,15 @@ input[type="file"] {
 
 .button-group {
   display: flex;
-  gap: var(--space-3);
-  margin: var(--space-4) 0;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  width: 100%;
 }
 
 button {
+  flex: 1 1 auto;
+  min-width: 120px;
+  white-space: nowrap;
   background-color: var(--color-secondary);
   color: var(--color-text);
   border: none;
@@ -185,4 +193,25 @@ canvas {
 
 .text-box:hover .delete-btn {
   display: block;
+}
+
+/* Mobiiliresponsiivisuus */
+@media (max-width: 480px) {
+  .controls {
+    padding: var(--space-2);
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  select {
+    font-size: 16px; /* Estää iOS zoomauksen input-kentissä */
+  }
 }
